@@ -6,29 +6,28 @@ void main() async {
   final output = File('output/output.json');
 
   if (output.existsSync()) {
-    await output.delete();
+    output.deleteSync();
   }
 
-  final content = <String>[];
+  output.writeAsStringSync('[ ');
 
   await inputDir.list().forEach((element) async {
     if (element is File) {
-      content.addAll(await _readContentsAndWriteToFile(element));
+      await _readContentsAndWriteToFile(element, output);
     }
   });
 
-  final writer = output.openWrite(mode: FileMode.append)..writeln('[ ');
+  // content
+  //   ..removeLast()
+  //   ..forEach(writer.writeln);
 
-  content
-    ..removeLast()
-    ..forEach(writer.writeln);
-
-  writer.writeln(']');
-
-  await writer.close();
+  output.writeAsStringSync(']', mode: FileMode.writeOnlyAppend);
 }
 
-Future<List<String>> _readContentsAndWriteToFile(File content) async {
+Future<void> _readContentsAndWriteToFile(
+  File content,
+  File output,
+) async {
   final unformattedLines = await utf8.decoder
       .bind(content.openRead())
       .transform(const LineSplitter())
@@ -47,5 +46,9 @@ Future<List<String>> _readContentsAndWriteToFile(File content) async {
     }
   }
 
-  return formatedLines;
+  formatedLines.forEach((element) {
+    output.writeAsStringSync('$element\n', mode: FileMode.writeOnlyAppend);
+  });
+
+  return;
 }
